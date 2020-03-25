@@ -22,11 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     LoadFirstAttr();
 
-    QStandardItemModel* model = new QStandardItemModel(nullptr);
+    model = new QStandardItemModel(nullptr);
 
     model->setHorizontalHeaderLabels(QStringList() << "Если" << "То");
-
-
 
     ui->table->setModel(model);
 
@@ -71,7 +69,7 @@ void MainWindow::OpenFileToRead(QString str)
     file.close();
 }
 
-void MainWindow::OpenFileToWrite(QString str)
+void MainWindow::OpenFileToWriteAtrr(QString str)
 {
     qDebug() << "OK";
     file.setFileName(str);
@@ -93,6 +91,38 @@ void MainWindow::OpenFileToWrite(QString str)
     file.write(docWr.toJson());
     file.close();
 }
+
+void MainWindow::OpenFileToWriteRulls(QString str)
+{
+    file.setFileName(str);
+    if(!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::information(nullptr,"error","Файл " + str + " не открылся для записи!!");
+        return;
+    }
+//    qDebug() << "--------------------SAVE TO FILE!!!-------------------";
+//    QStringList list;
+//    for(int i = 0; i < ui->attr->count(); ++i)
+//    {
+//        list.push_back(ui->attr->item(i)->text());
+//    }
+//    QJsonArray arr = QJsonArray::fromStringList(list);
+
+//    QJsonDocument docWr;
+//    docWr.setArray(arr);
+
+//    file.write(docWr.toJson());
+    //    file.close();
+}
+
+QModelIndex MainWindow::findTable(QString str)
+{
+    QModelIndexList match;
+    QModelIndex firstMatch;
+    match = ui->table->model()->match(ui->table->model()->index(0,0),Qt::DisplayRole, str);
+    firstMatch=match.value(0);
+    return firstMatch;
+}
+
 /*добавление нового атрибута*/
 void MainWindow::on_pushButton_4_clicked()
 {
@@ -112,5 +142,46 @@ void MainWindow::on_pushButton_5_clicked()
 /*сохранение артибутов*/
 void MainWindow::on_pushButton_6_clicked()
 {
-    OpenFileToWrite(attr);
+    OpenFileToWriteAtrr(attr);
+}
+
+
+/*добавление нового правила*/
+void MainWindow::on_pushButton_7_clicked()
+{
+    if (ui->ifLine->text().size() == 0 || ui->elseLine->text().size() == 0) {
+        QMessageBox::information(nullptr,"error","Введите обе части правила!");
+        return;
+    }
+    /*разбиваем строки на подстроки, как только находим ИЛИ*/
+    QRegExp rx("( ИЛИ )|( или )");
+    QStringList listOr = ui->ifLine->text().split(rx);
+
+    /*уже разбитые по ИЛИ строки разбиваем по И*/
+    QVector<QStringList> vectorAnd;
+    QRegExp rx2("( И )|( и )");
+    foreach (QString str, listOr) {
+        vectorAnd.push_back(str.split(rx2));
+    }
+
+    /*Проверка на существование слов в АТРИБУТАХ*/
+    foreach (QStringList StrList, vectorAnd) {
+        foreach (QString str, StrList) {
+            if (ui->attr->findItems(str,Qt::MatchFixedString).empty()) {
+                QMessageBox::information(nullptr,"error","Атрибут \"" + str + "\" не существует!");
+                return;
+            }
+        }
+    }
+
+    /*проверка на повторный атрибут*/
+    if (findTable(ui->ifLine->text()).isValid()) {
+        QMessageBox::information(nullptr,"error","Условие \"ЕСЛИ\" уже существует в списке правил");
+        return;
+    }
+
+    /*Добавление атрибута в таблицу*/
+    QStandardItem* item1 = new QStandardItem(ui->ifLine->text());
+    QStandardItem* item2 = new QStandardItem(ui->elseLine->text());
+    model->appendRow(QList<QStandardItem*>()<<item1<<item2);
 }

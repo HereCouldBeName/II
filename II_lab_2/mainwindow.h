@@ -14,6 +14,7 @@
 
 #include <QMessageBox>
 #include <QDebug>
+#include <QtGui>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -58,10 +59,15 @@ private slots:
 
     void on_pushButton_6_clicked();
 
+    void on_pushButton_7_clicked();
+
 private:
     Ui::MainWindow *ui;
+    QStandardItemModel* model;
     void LoadFirstAttr();
     void OpenFileToRead(QString str);
-    void OpenFileToWrite(QString str);
+    void OpenFileToWriteAtrr(QString str);
+    void OpenFileToWriteRulls(QString str);
+    QModelIndex findTable(QString str);
 };
 #endif // MAINWINDOW_H
