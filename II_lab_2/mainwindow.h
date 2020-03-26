@@ -61,9 +61,12 @@ private slots:
 
     void on_pushButton_7_clicked();
 
+    void on_pushButton_3_clicked();
+
 private:
     Ui::MainWindow *ui;
     QStandardItemModel* model;
+    void LoadFirstRulls();
     void LoadFirstAttr();
     void OpenFileToRead(QString str);
     void OpenFileToWriteAtrr(QString str);

@@ -8,30 +8,17 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    /*
-     * Работа с файлами
-    */
+    /*модуль для правил*/
 
     OpenFileToRead(rules);
 
-    if(docErr.errorString().toInt() == QJsonParseError::NoError) {
-        qDebug() << doc.object()["оранжевый и темно-зелёный лист"].toString();
-    }
+    LoadFirstRulls();
+
+    /*модуль для атрибутов*/
 
     OpenFileToRead(attr);
 
     LoadFirstAttr();
-
-    model = new QStandardItemModel(nullptr);
-
-    model->setHorizontalHeaderLabels(QStringList() << "Если" << "То");
-
-    ui->table->setModel(model);
-
-    ui->table->resizeColumnsToContents();
-    ui->table->resizeRowsToContents();
-
-    ui->table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
 }
 
@@ -99,18 +86,19 @@ void MainWindow::OpenFileToWriteRulls(QString str)
         QMessageBox::information(nullptr,"error","Файл " + str + " не открылся для записи!!");
         return;
     }
-//    qDebug() << "--------------------SAVE TO FILE!!!-------------------";
-//    QStringList list;
-//    for(int i = 0; i < ui->attr->count(); ++i)
-//    {
-//        list.push_back(ui->attr->item(i)->text());
-//    }
-//    QJsonArray arr = QJsonArray::fromStringList(list);
 
-//    QJsonDocument docWr;
-//    docWr.setArray(arr);
+    //    qDebug() << "--------------------SAVE TO FILE!!!-------------------";
+    //    QStringList list;
+    //    for(int i = 0; i < ui->attr->count(); ++i)
+    //    {
+    //        list.push_back(ui->attr->item(i)->text());
+    //    }
+    //    QJsonArray arr = QJsonArray::fromStringList(list);
 
-//    file.write(docWr.toJson());
+    //    QJsonDocument docWr;
+    //    docWr.setArray(arr);
+
+    //    file.write(docWr.toJson());
     //    file.close();
 }
 
@@ -184,4 +172,46 @@ void MainWindow::on_pushButton_7_clicked()
     QStandardItem* item1 = new QStandardItem(ui->ifLine->text());
     QStandardItem* item2 = new QStandardItem(ui->elseLine->text());
     model->appendRow(QList<QStandardItem*>()<<item1<<item2);
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    int count = ui->table->selectionModel()->selectedRows().count();
+    for( int i = 0; i < count; i++) {
+        ui->table->model()->removeRow( ui->table->selectionModel()->selectedRows().at( i).row(), QModelIndex());
+    }
+}
+
+void MainWindow::on_pushButton_3_clicked()
+{
+    OpenFileToWriteRulls(rules);
+}
+
+/*
+ * Вывод списка правил на момент загрузки
+*/
+
+void MainWindow::LoadFirstRulls()
+{
+    if(docErr.errorString().toInt() == QJsonParseError::NoError) {
+
+        model = new QStandardItemModel(nullptr);
+        model->setHorizontalHeaderLabels(QStringList() << "Если" << "То");
+        ui->table->setModel(model);
+
+        ui->table->resizeColumnsToContents();
+        ui->table->resizeRowsToContents();
+
+        ui->table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+
+
+        foreach (QString str, doc.object().keys()) {
+            qDebug() <<str;
+            QStandardItem* item1 = new QStandardItem(str);
+            QStandardItem* item2 = new QStandardItem(doc.object()[str].toString());
+            model->appendRow(QList<QStandardItem*>()<<item1<<item2);
+
+        }
+        qDebug() << doc.object().keys().count();
+     }
 }
