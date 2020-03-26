@@ -86,20 +86,14 @@ void MainWindow::OpenFileToWriteRulls(QString str)
         QMessageBox::information(nullptr,"error","Файл " + str + " не открылся для записи!!");
         return;
     }
-
-    //    qDebug() << "--------------------SAVE TO FILE!!!-------------------";
-    //    QStringList list;
-    //    for(int i = 0; i < ui->attr->count(); ++i)
-    //    {
-    //        list.push_back(ui->attr->item(i)->text());
-    //    }
-    //    QJsonArray arr = QJsonArray::fromStringList(list);
-
-    //    QJsonDocument docWr;
-    //    docWr.setArray(arr);
-
-    //    file.write(docWr.toJson());
-    //    file.close();
+    QVariantMap map;
+    int row = model->rowCount();
+    for(int i=0; i<row; i++) {
+        qDebug() << model->item(i,0)->text() <<" " << model->item(i,1)->text();
+        map.insert(model->item(i,0)->text(), model->item(i,1)->text());
+    }
+    file.write(QJsonDocument(QJsonObject::fromVariantMap(map)).toJson());
+    file.close();
 }
 
 QModelIndex MainWindow::findTable(QString str)
@@ -206,12 +200,10 @@ void MainWindow::LoadFirstRulls()
 
 
         foreach (QString str, doc.object().keys()) {
-            qDebug() <<str;
             QStandardItem* item1 = new QStandardItem(str);
             QStandardItem* item2 = new QStandardItem(doc.object()[str].toString());
             model->appendRow(QList<QStandardItem*>()<<item1<<item2);
 
         }
-        qDebug() << doc.object().keys().count();
      }
 }
