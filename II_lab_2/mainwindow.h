@@ -16,6 +16,8 @@
 #include <QDebug>
 #include <QtGui>
 
+#include "search.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -49,7 +51,6 @@ public:
     QFile file;
 
 private slots:
-    void on_table_activated(const QModelIndex &index);
 
     void on_pushButton_clicked();
 
@@ -63,14 +64,21 @@ private slots:
 
     void on_pushButton_3_clicked();
 
+    void on_pushButton_2_clicked();
+
 private:
     Ui::MainWindow *ui;
     QStandardItemModel* model;
+    Search* searchWindow;
     void LoadFirstRulls();
     void LoadFirstAttr();
     void OpenFileToRead(QString str);
     void OpenFileToWriteAtrr(QString str);
     void OpenFileToWriteRulls(QString str);
-    QModelIndex findTable(QString str);
+    QVector<QStringList> SeparateRulls(QString str);
+public:
+    bool findTable(QString str);
+    bool IsAttrEmpty(QString str);
+    void CheckUserSearch(QStringList list);
 };
 #endif // MAINWINDOW_H

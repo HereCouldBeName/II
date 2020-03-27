@@ -136,6 +136,13 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="pushButton_2">
+          <property name="text">
+           <string>Поиск</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item row="4" column="1">
