@@ -26,6 +26,7 @@ private slots:
 
 private:
     Ui::Search *ui;
+    QString lastSearch;
 };
 
 #endif // SEARCH_H

@@ -70,15 +70,32 @@ private:
     Ui::MainWindow *ui;
     QStandardItemModel* model;
     Search* searchWindow;
+    QStringList errorRulls;
+    QStringList lastRequest;
+    QString answerRull;
     void LoadFirstRulls();
     void LoadFirstAttr();
     void OpenFileToRead(QString str);
     void OpenFileToWriteAtrr(QString str);
     void OpenFileToWriteRulls(QString str);
     QVector<QStringList> SeparateRulls(QString str);
+
+    struct ind {
+        int indexMin1 = 0;
+        int indexMin2 = 0;
+        int countFalse = 0;
+    };
+
+    ind min;
+
 public:
     bool findTable(QString str);
     bool IsAttrEmpty(QString str);
-    void CheckUserSearch(QStringList list);
+    /*
+     * option = 1 - пользователь подтвердил
+     * option = 0 - пользователь опроверг
+     * option = 2 - вопрос от пользователя
+    */
+    void CheckUserSearch(QStringList list, int option);
 };
 #endif // MAINWINDOW_H

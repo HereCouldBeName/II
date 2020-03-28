@@ -27,23 +27,40 @@ void Search::on_pushButton_2_clicked()
 
 void Search::on_pushButton_clicked()
 {
-    if (ui->searchLine->text().size() == 0) {
+    QString strSearch = ui->searchLine->text();
+    if (strSearch.size() == 0) {
         QMessageBox::information(nullptr,"error","Не введено выражение для поиска!");
+        return;
+    }
+
+    MainWindow *window = (MainWindow*)parent();
+
+    QStringList list;
+
+    if(strSearch.toLower() == "да") {
+        window->CheckUserSearch(list,1);
+        return;
+    }
+    if(strSearch.toLower() == "нет") {
+        window->CheckUserSearch(list,0);
+        return;
+    }
+    if(strSearch.toLower() == "почему?") {
+        window->CheckUserSearch(list,2);
         return;
     }
 
     /*Раздеяем строку на подстроки по ';'*/
     QRegExp rx(";");
-    QStringList list = ui->searchLine->text().split(rx);
+    list = strSearch.split(rx);
 
     /*Проверяем каждый атрибут на наличие в списке*/
-    MainWindow *window = (MainWindow*)parent();
     foreach (QString str, list) {
         if (window->IsAttrEmpty(str)) {
             QMessageBox::information(nullptr,"error","Атрибута \"" + str +"\" не существует в списке атрибутов");
             return;
         }
     }
-    /*получаем список правил*/
-    window->CheckUserSearch(list);
+    /*Проверка поиска*/
+    window->CheckUserSearch(list,0);
 }

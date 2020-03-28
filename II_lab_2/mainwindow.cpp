@@ -133,31 +133,58 @@ bool MainWindow::IsAttrEmpty(QString str)
     return ui->attr->findItems(str,Qt::MatchFixedString).empty();
 }
 
-void MainWindow::CheckUserSearch(QStringList list)
+void MainWindow::CheckUserSearch(QStringList list, int option)
 {
+    if(list.isEmpty()) {
+        list = lastRequest;
+
+        if(option == 0) {
+            errorRulls.push_back(answerRull);
+        } else if(option == 1){
+            list.push_back(answerRull);
+        } else {
+            QString s = "---------------------------Ответ экспертной системы:---------------------------"
+                        " \nПроверка по правилу, где:\nПравило: "
+                    + model->item(min.indexMin1,0)->text() + "\nДолжность: "
+                    + model->item(min.indexMin1,1)->text() + "\n\n";
+            searchWindow->SetTextExpert(s);
+        }
+    }
+    lastRequest = list;
+
     /*Перебор всех правил*/
     int row = model->rowCount();
-    QVector<QVector<QList<bool>>> fullres;
+    QVector<QVector<QList<int>>> fullres;
     for(int i=0; i<row; i++) {
         qDebug() << model->item(i,0)->text() <<" " << model->item(i,1)->text();
         QVector<QStringList> vectorAndRulls = SeparateRulls(model->item(i,0)->text());
         /*Сравниваем каждое подправило с поиском*/
         qDebug() << list;
-        QVector<QList<bool>> res;
+        QVector<QList<int>> res;
         res.resize(vectorAndRulls.size());
         int index = 0;
         foreach (QStringList listRull, vectorAndRulls) {
             foreach (QString rull, listRull) {
-                bool isFind = false;
-                foreach (QString str, list) {
-                    if(str.toLower() == rull.toLower()) {
-                        res[index].push_back(true);
-                        isFind = true;
+                bool isErr = false;
+                foreach (QString err, errorRulls) {
+                    if(err.toLower() == rull.toLower()) {
+                        res[index].push_back(2); // НИКОГДА не ВЫПОЛНИТСЯ
+                        isErr = true;
                         break;
                     }
                 }
-                if(!isFind) {
-                    res[index].push_back(false);
+                if(!isErr) {
+                    bool isFind = false;
+                    foreach (QString str, list) {
+                        if(str.toLower() == rull.toLower()) {
+                            res[index].push_back(1); //найдено
+                            isFind = true;
+                            break;
+                        }
+                    }
+                    if(!isFind) {
+                        res[index].push_back(0); // не найдено
+                    }
                 }
             }
             index++;
@@ -165,34 +192,24 @@ void MainWindow::CheckUserSearch(QStringList list)
         fullres.push_back(res);
     }
 
-    struct ind {
-        int indexMin1 = 0;
-        int indexMin2 = 0;
-        int indexMin3 = 0;
-        int countFalse = 0;
-    };
-
     ind curr;
 
-    ind min;
-
-    min.indexMin1 = 99999;
-    min.indexMin2 = 99999;
-    min.indexMin3 = 99999;
     min.countFalse = 99999;
 
-    foreach (QVector<QList<bool>> rullfull, fullres) {
+    foreach (QVector<QList<int>> rullfull, fullres) {
         curr.indexMin2 = 0;
-        foreach (QList<bool> rullOr, rullfull) {
+        foreach (QList<int> rullOr, rullfull) {
             curr.countFalse = 0;
-            curr.indexMin3 = 0;
-            foreach (bool el, rullOr) {
-                if(!el) {
+            bool notTake = false;
+            foreach (int el, rullOr) {
+                if(el == 0) {
                     curr.countFalse++;
-                    curr.indexMin3++;
+                } else if(el == 2) {
+                    notTake = true;
+                    break;
                 }
             }
-            if(curr.countFalse < min.countFalse) {
+            if(curr.countFalse < min.countFalse && !notTake) {
                 min = curr;
             }
             curr.indexMin2++;
@@ -200,13 +217,34 @@ void MainWindow::CheckUserSearch(QStringList list)
         curr.indexMin1++;
     }
     qDebug() << fullres;
-    qDebug() << min.indexMin1 << " "<< min.indexMin2 << " " << min.indexMin3 << " "<<min.countFalse;
+    qDebug() << min.indexMin1 << " "<< min.indexMin2 <<" "<< min.countFalse;
     if(min.countFalse == 0) {
         QString s = "---------------------------Заключение экспертной системы:---------------------------"
                     " \nПо вашему запросу найдено:\nПравило: "
-                + model->item(min.indexMin1,0)->text() + "\nИз которого следует: "
+                + model->item(min.indexMin1,0)->text() + "\nИз которого следует что вы подходите на должность: "
                 + model->item(min.indexMin1,1)->text() + "\n\n";
         searchWindow->SetTextExpert(s);
+        return;
+    }
+    if(min.countFalse == 99999) {
+        QString s = "---------------------------Заключение экспертной системы:---------------------------"
+                    "\nВы не подходите ни на одну из должностей";
+        searchWindow->SetTextExpert(s);
+        return;
+    }
+
+    int i = 0;
+    foreach (int val, fullres[min.indexMin1][min.indexMin2]) {
+        if(val == 0) {
+            QVector<QStringList> vectorAndRulls = SeparateRulls(model->item(min.indexMin1,0)->text());
+            answerRull = vectorAndRulls[min.indexMin2][i];
+            QString s = "---------------------------Вопрос от экспертной системы:---------------------------"
+                       "\nВерно ли, что вы знаете/имеете \"" + answerRull + "\"?";
+            qDebug() << s;
+            searchWindow->SetTextExpert(s);
+            return;
+        }
+        i++;
     }
 }
 
