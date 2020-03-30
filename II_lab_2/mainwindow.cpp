@@ -111,14 +111,21 @@ QVector<QStringList> MainWindow::SeparateRulls(QString str)
     return vectorAnd;
 }
 
+void MainWindow::MarkRulls(int row, Qt::GlobalColor color)
+{
+    for(int i=0; i<model->rowCount(); i++) {
+        model->setData(model->index(i,0),QBrush(Qt::white),Qt::BackgroundRole);
+        model->setData(model->index(i,1),QBrush(Qt::white),Qt::BackgroundRole);
+    }
+    if(color != Qt::white) {
+        model->setData(model->index(row,0),QBrush(color), Qt::BackgroundRole);
+        model->setData(model->index(row,1),QBrush(color), Qt::BackgroundRole);
+    }
+}
+
 /*Функция поиска по таблице*/
 bool MainWindow::findTable(QString str)
 {
-    /*   QModelIndexList match;
-        QModelIndex firstMatch;
-        match = ui->table->model()->match(ui->table->model()->index(0,0),Qt::DisplayRole, str);
-        firstMatch=match.value(0);*/
-
     int row = model->rowCount();
     for(int i=0; i<row; i++) {
         if(model->item(i,0)->text().toLower() == str.toLower())
@@ -143,6 +150,7 @@ void MainWindow::CheckUserSearch(QStringList list, int option)
         } else if(option == 1){
             list.push_back(answerRull);
         } else {
+            MarkRulls(min.indexMin1, Qt::yellow);
             QString s = "---------------------------Ответ экспертной системы:---------------------------"
                         " \nПроверка по правилу, где:\nПравило: "
                     + model->item(min.indexMin1,0)->text() + "\nДолжность: "
@@ -219,6 +227,7 @@ void MainWindow::CheckUserSearch(QStringList list, int option)
     qDebug() << fullres;
     qDebug() << min.indexMin1 << " "<< min.indexMin2 <<" "<< min.countFalse;
     if(min.countFalse == 0) {
+        MarkRulls(min.indexMin1, Qt::green);
         QString s = "---------------------------Заключение экспертной системы:---------------------------"
                     " \nПо вашему запросу найдено:\nПравило: "
                 + model->item(min.indexMin1,0)->text() + "\nИз которого следует что вы подходите на должность: "
@@ -239,13 +248,18 @@ void MainWindow::CheckUserSearch(QStringList list, int option)
             QVector<QStringList> vectorAndRulls = SeparateRulls(model->item(min.indexMin1,0)->text());
             answerRull = vectorAndRulls[min.indexMin2][i];
             QString s = "---------------------------Вопрос от экспертной системы:---------------------------"
-                       "\nВерно ли, что вы знаете/имеете \"" + answerRull + "\"?";
+                       "\nВерно ли, что вы владеете \"" + answerRull + "\"?";
             qDebug() << s;
             searchWindow->SetTextExpert(s);
             return;
         }
         i++;
     }
+}
+
+void MainWindow::ClearSearchInTable()
+{
+    MarkRulls(0, Qt::white);
 }
 
 /*добавление нового атрибута*/
@@ -295,9 +309,42 @@ void MainWindow::on_pushButton_7_clicked()
     }
 
     /*проверка на повторное правило*/
-    if (findTable(ui->ifLine->text())) {
-        QMessageBox::information(nullptr,"error","Условие \"ЕСЛИ\" уже существует в списке правил");
-        return;
+
+
+    int row = model->rowCount();
+    for(int i=0; i<row; i++) {
+        foreach (QStringList StrList, vectorAnd) {
+            QVector<QStringList> vectorAndRulls = SeparateRulls(model->item(i,0)->text());
+            foreach(QStringList ListRulls, vectorAndRulls) {
+                int countTrue = 0;
+                if(StrList.size() <= ListRulls.size()) {
+                    foreach (QString strFind, StrList) {
+                        bool isFind = false;
+                        foreach (QString rullStr, ListRulls) {
+                            if(strFind.toLower() == rullStr.toLower()) {
+                                isFind = true;
+                                countTrue++;
+                                break;
+                            }
+                        }
+                        if(!isFind) {
+                            break;
+                        }
+                    }
+                    if(countTrue >= StrList.size()) {
+                        QString txt;
+                        MarkRulls(i,Qt::red);
+                        foreach (QString strFind, StrList) {
+                            txt += " " + strFind;
+                        }
+                        QMessageBox::information(nullptr,"Предупреждение","Условие \""
+                                                 +txt+
+                                                 "\" уже существует в списке правил, добавление не возможно");
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     /*Добавление атрибута в таблицу*/

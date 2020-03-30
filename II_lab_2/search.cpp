@@ -22,6 +22,10 @@ void Search::SetTextExpert(QString str)
 
 void Search::on_pushButton_2_clicked()
 {
+    MainWindow *window = (MainWindow*)parent();
+
+    window->ClearSearchInTable();
+
     this->close();
 }
 

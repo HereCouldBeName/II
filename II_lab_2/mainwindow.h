@@ -87,6 +87,7 @@ private:
     };
 
     ind min;
+    void MarkRulls(int row, Qt::GlobalColor color);
 
 public:
     bool findTable(QString str);
@@ -97,5 +98,6 @@ public:
      * option = 2 - вопрос от пользователя
     */
     void CheckUserSearch(QStringList list, int option);
+    void ClearSearchInTable();
 };
 #endif // MAINWINDOW_H
